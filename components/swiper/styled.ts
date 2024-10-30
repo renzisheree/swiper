@@ -1,17 +1,25 @@
 import styled from "styled-components";
-interface ContainerProps {
+
+export interface ContainerProps {
   $isMobile: boolean;
 }
 
-interface TitleProps {
+export interface TitleProps {
   $isMobile: boolean;
 }
-interface DesktopImageWrapperProps {
+
+export interface DesktopImageWrapperProps {
   $width: number;
 }
 
-interface MobileImageWrapperProps {
+export interface MobileImageWrapperProps {
   $aspectRatio: number;
+}
+
+export type ScrollPosition = "start" | "end" | "between";
+
+export interface DesktopSwiperWrapperProps {
+  $scrollPosition: ScrollPosition;
 }
 
 export const Container = styled.div<ContainerProps>`
@@ -44,24 +52,60 @@ export const LoadingMessage = styled.div`
   margin-top: 20px;
 `;
 
-export const DesktopSwiperWrapper = styled.div`
+export const DesktopSwiperWrapper = styled.div<DesktopSwiperWrapperProps>`
   position: relative;
   margin-bottom: 20px;
 
+  &::before,
   &::after {
     content: "";
     position: absolute;
     top: 0;
-    right: 0;
     height: 100%;
     width: 96px;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(
+      to left,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 1)
+    );
+    opacity: ${(props) => {
+      switch (props.$scrollPosition) {
+        case "end":
+          return 1;
+        case "between":
+          return 1;
+        case "start":
+        default:
+          return 0;
+      }
+    }};
+  }
+
+  &::after {
+    right: 0;
     background: linear-gradient(
       to right,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 1)
     );
-    pointer-events: none;
-    z-index: 10;
+    opacity: ${(props) => {
+      switch (props.$scrollPosition) {
+        case "start":
+          return 1;
+        case "between":
+          return 1;
+        case "end":
+        default:
+          return 0;
+      }
+    }};
   }
 
   .swiper {
