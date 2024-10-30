@@ -79,13 +79,13 @@ const ImageGallery: React.FC = () => {
     setThumbSize(thumbSizePercent);
     setScrollPosition(currentPosition);
   };
-
+  // fetch image từ picsum
   const loadImages = async () => {
     const imageUrls = Array.from({ length: 30 }, (_, index) => {
       const { width, height } = getRandomResolution();
       return `https://picsum.photos/${width}/${height}?random=${index}`;
     });
-
+    //lấy width và height của image
     const loadedImages = await Promise.all(
       imageUrls.map((url) => {
         return new Promise<LoadedImage>((resolve) => {
@@ -116,7 +116,7 @@ const ImageGallery: React.FC = () => {
         });
       })
     );
-
+    // chia image cho 2 swiper
     const shuffledImages = loadedImages.sort(() => Math.random() - 0.5);
     const midPoint = Math.ceil(shuffledImages.length / 2);
 
@@ -129,6 +129,7 @@ const ImageGallery: React.FC = () => {
     loadImages();
   }, []);
 
+  // blur effect
   const handleSlideChange = (swiper: SwiperType) => {
     updateScrollbar(swiper);
     const isStart = swiper.isBeginning;
@@ -142,7 +143,7 @@ const ImageGallery: React.FC = () => {
   if (loading) {
     return <LoadingMessage>Loading...</LoadingMessage>;
   }
-
+  // mobile
   if (isMobile) {
     return (
       <MobileContainer>
@@ -168,7 +169,7 @@ const ImageGallery: React.FC = () => {
       </MobileContainer>
     );
   }
-
+  // desktop
   return (
     <Container $isMobile={false}>
       <Title $isMobile={false}>Thư viện hình ảnh</Title>
@@ -185,7 +186,7 @@ const ImageGallery: React.FC = () => {
             <SwiperSlide key={`first-${index}`}>
               <DesktopImageWrapper
                 $width={
-                  (image.dimensions.width / image.dimensions.height) * 366
+                  (image.dimensions.width / image.dimensions.height) * 366 // tính width từ height mặc định
                 }
               >
                 <StyledImage
@@ -212,7 +213,7 @@ const ImageGallery: React.FC = () => {
             <SwiperSlide key={`second-${index}`}>
               <DesktopImageWrapper
                 $width={
-                  (image.dimensions.width / image.dimensions.height) * 366
+                  (image.dimensions.width / image.dimensions.height) * 366 //tính width từ height mặc định
                 }
               >
                 <StyledImage
@@ -237,13 +238,13 @@ const ImageGallery: React.FC = () => {
 };
 
 export default ImageGallery;
-
+// random resolution để test
 const getRandomResolution = () => {
   const aspectRatios = [
-    { width: 1200, height: 800 },
-    { width: 1200, height: 1200 },
-    { width: 800, height: 1200 },
-    { width: 1200, height: 675 },
+    { width: 1200, height: 800 }, // 3/2
+    { width: 1200, height: 1200 }, // 1/1
+    { width: 800, height: 1200 }, // 2/3
+    { width: 1200, height: 675 }, // 16/9
   ];
   return aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
 };
