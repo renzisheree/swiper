@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Controller, FreeMode } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/free-mode";
+
 import {
   Container,
   Title,
@@ -13,8 +14,9 @@ import {
   MobileContainer,
   MobileImageWrapper,
   StyledImage,
-  ScrollPosition,
 } from "./styled";
+import Scrollbar from "../scrollbar";
+import useScrollbar from "../../hooks/useScrollbar";
 
 interface ImageDimensions {
   width: number;
@@ -36,10 +38,21 @@ const ImageGallery: React.FC = () => {
   const [firstSwiper, setFirstSwiper] = useState<SwiperType | null>(null);
   const [secondSwiper, setSecondSwiper] = useState<SwiperType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firstSwiperPosition, setFirstSwiperPosition] =
-    useState<ScrollPosition>("start");
-  const [secondSwiperPosition, setSecondSwiperPosition] =
-    useState<ScrollPosition>("start");
+  const [swiperPosition, setSwiperPosition] = useState<
+    "start" | "end" | "between"
+  >("start");
+
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [thumbSize, setThumbSize] = useState(20);
+
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const { handleMouseDown } = useScrollbar(
+    firstSwiper,
+    secondSwiper,
+    setScrollPosition,
+    scrollPosition,
+    thumbSize
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -51,30 +64,20 @@ const ImageGallery: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleSlideChange = (
-    swiper: SwiperType,
-    setPosition: (pos: ScrollPosition) => void
-  ) => {
-    const isStart = swiper.isBeginning;
-    const isEnd = swiper.isEnd;
+  const updateScrollbar = (swiper: SwiperType) => {
+    const progress = swiper.progress;
+    const maxSlides = swiper.slides.length;
+    const visibleSlides =
+      swiper.params.slidesPerView === "auto"
+        ? Math.ceil(swiper.slides.length / 2)
+        : (swiper.params.slidesPerView as number);
 
-    if (isStart) {
-      setPosition("start");
-    } else if (isEnd) {
-      setPosition("end");
-    } else {
-      setPosition("between");
-    }
-  };
+    const thumbSizePercent = Math.min((visibleSlides / maxSlides) * 100, 100);
+    const maxScrollPosition = 100 - thumbSizePercent;
+    const currentPosition = progress * maxScrollPosition;
 
-  const getRandomResolution = () => {
-    const aspectRatios = [
-      { width: 1200, height: 800 },
-      { width: 1200, height: 1200 },
-      { width: 800, height: 1200 },
-      { width: 1200, height: 675 },
-    ];
-    return aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+    setThumbSize(thumbSizePercent);
+    setScrollPosition(currentPosition);
   };
 
   const loadImages = async () => {
@@ -126,6 +129,16 @@ const ImageGallery: React.FC = () => {
     loadImages();
   }, []);
 
+  const handleSlideChange = (swiper: SwiperType) => {
+    updateScrollbar(swiper);
+    const isStart = swiper.isBeginning;
+    const isEnd = swiper.isEnd;
+
+    if (isStart) setSwiperPosition("start");
+    else if (isEnd) setSwiperPosition("end");
+    else setSwiperPosition("between");
+  };
+
   if (loading) {
     return <LoadingMessage>Loading...</LoadingMessage>;
   }
@@ -168,18 +181,14 @@ const ImageGallery: React.FC = () => {
   return (
     <Container $isMobile={false}>
       <Title $isMobile={false}>Thư viện hình ảnh</Title>
-      <DesktopSwiperWrapper $scrollPosition={firstSwiperPosition}>
+      <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
         <Swiper
           modules={[Controller]}
           onSwiper={setFirstSwiper}
           controller={{ control: secondSwiper }}
           slidesPerView="auto"
           spaceBetween={24}
-          onSlideChange={(swiper) =>
-            handleSlideChange(swiper, setFirstSwiperPosition)
-          }
-          onReachBeginning={() => setFirstSwiperPosition("start")}
-          onReachEnd={() => setFirstSwiperPosition("end")}
+          onSlideChange={handleSlideChange}
         >
           {firstSwiperImages.map((image, index) => (
             <SwiperSlide key={`first-${index}`}>
@@ -199,29 +208,25 @@ const ImageGallery: React.FC = () => {
         </Swiper>
       </DesktopSwiperWrapper>
 
-      <DesktopSwiperWrapper $scrollPosition={secondSwiperPosition}>
+      <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
         <Swiper
           modules={[Controller]}
           onSwiper={setSecondSwiper}
           controller={{ control: firstSwiper }}
           slidesPerView="auto"
           spaceBetween={24}
-          onSlideChange={(swiper) =>
-            handleSlideChange(swiper, setSecondSwiperPosition)
-          }
-          onReachBeginning={() => setSecondSwiperPosition("start")}
-          onReachEnd={() => setSecondSwiperPosition("end")}
+          onSlideChange={handleSlideChange}
         >
           {secondSwiperImages.map((image, index) => (
             <SwiperSlide key={`second-${index}`}>
               <DesktopImageWrapper
                 $width={
-                  (image.dimensions.width / image.dimensions.height) * 333
+                  (image.dimensions.width / image.dimensions.height) * 366
                 }
               >
                 <StyledImage
                   src={image.src}
-                  alt={`Image ${index + firstSwiperImages.length}`}
+                  alt={`Image ${index}`}
                   loading="lazy"
                 />
               </DesktopImageWrapper>
@@ -229,8 +234,25 @@ const ImageGallery: React.FC = () => {
           ))}
         </Swiper>
       </DesktopSwiperWrapper>
+
+      <Scrollbar
+        ref={scrollbarRef}
+        position={scrollPosition}
+        size={thumbSize}
+        onMouseDown={handleMouseDown}
+      />
     </Container>
   );
 };
 
 export default ImageGallery;
+
+const getRandomResolution = () => {
+  const aspectRatios = [
+    { width: 1200, height: 800 },
+    { width: 1200, height: 1200 },
+    { width: 800, height: 1200 },
+    { width: 1200, height: 675 },
+  ];
+  return aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+};

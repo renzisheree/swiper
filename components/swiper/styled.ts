@@ -1,4 +1,7 @@
 import styled from "styled-components";
+export interface PaginationDotProps {
+  $isActive: boolean;
+}
 
 export interface ContainerProps {
   $isMobile: boolean;
@@ -162,4 +165,30 @@ export const StyledImage = styled.img`
   object-fit: cover;
   border-radius: 24px;
   object-position: center;
+`;
+export const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+`;
+
+export const PaginationWrapper = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+export const PaginationDot = styled.button<PaginationDotProps>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${(props) => (props.$isActive ? "#e87722" : "#D9D9D9")};
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) => (props.$isActive ? "#e87722" : "#BFBFBF")};
+  }
 `;
