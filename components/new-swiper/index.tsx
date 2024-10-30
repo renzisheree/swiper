@@ -118,6 +118,7 @@ const ImageGallery: React.FC = () => {
       <MobileContainer>
         <Title $isMobile={true}>Thư viện hình ảnh</Title>
         <Swiper
+          modules={[Mousewheel]}
           direction="vertical"
           className="mobile-swiper"
           slidesPerView={"auto"}

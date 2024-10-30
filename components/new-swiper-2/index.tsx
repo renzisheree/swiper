@@ -123,7 +123,7 @@ const ImageGallery: React.FC = () => {
           className="mobile-swiper"
           slidesPerView={"auto"}
           mousewheel={true}
-          freeMode={true}
+          // freeMode={true}
           spaceBetween={16}
         >
           {firstSwiperImages.concat(secondSwiperImages).map((image, index) => (
@@ -148,7 +148,7 @@ const ImageGallery: React.FC = () => {
 
       <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
         <Swiper
-          modules={[Controller, Mousewheel, FreeMode]}
+          modules={[Controller, Mousewheel]}
           onSwiper={setFirstSwiper}
           controller={{ control: secondSwiper }}
           slidesPerView="auto"
@@ -157,13 +157,13 @@ const ImageGallery: React.FC = () => {
           onReachBeginning={() => setSwiperPosition("start")}
           onReachEnd={() => setSwiperPosition("end")}
           mousewheel={true}
-          freeMode={true}
+          // freeMode={true}
         >
           {firstSwiperImages.map((image, index) => (
             <SwiperSlide key={`first-${index}`}>
               <DesktopImageWrapper
                 $width={
-                  (image.dimensions.width / image.dimensions.height) * 366
+                  (image.dimensions.width / image.dimensions.height) * 366 // tính width phù hợp từ height
                 }
               >
                 <StyledImage
@@ -179,7 +179,7 @@ const ImageGallery: React.FC = () => {
 
       <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
         <Swiper
-          modules={[Controller, Mousewheel, FreeMode]}
+          modules={[Controller, Mousewheel]}
           onSwiper={setSecondSwiper}
           controller={{ control: firstSwiper }}
           slidesPerView="auto"
@@ -194,7 +194,7 @@ const ImageGallery: React.FC = () => {
             <SwiperSlide key={`second-${index}`}>
               <DesktopImageWrapper
                 $width={
-                  (image.dimensions.width / image.dimensions.height) * 366
+                  (image.dimensions.width / image.dimensions.height) * 366 // tính width phù hợp từ height
                 }
               >
                 <StyledImage
