@@ -118,9 +118,12 @@ const ImageGallery: React.FC = () => {
       <MobileContainer>
         <Title $isMobile={true}>Thư viện hình ảnh</Title>
         <Swiper
+          modules={[Mousewheel, FreeMode]}
           direction="vertical"
           className="mobile-swiper"
           slidesPerView={"auto"}
+          mousewheel={true}
+          freeMode={true}
           spaceBetween={16}
         >
           {firstSwiperImages.concat(secondSwiperImages).map((image, index) => (
@@ -151,6 +154,8 @@ const ImageGallery: React.FC = () => {
           slidesPerView="auto"
           spaceBetween={24}
           onSlideChange={handleSlideChange}
+          onReachBeginning={() => setSwiperPosition("start")}
+          onReachEnd={() => setSwiperPosition("end")}
           mousewheel={true}
           freeMode={true}
         >
@@ -181,6 +186,8 @@ const ImageGallery: React.FC = () => {
           spaceBetween={24}
           onSlideChange={handleSlideChange}
           mousewheel={true}
+          onReachBeginning={() => setSwiperPosition("start")}
+          onReachEnd={() => setSwiperPosition("end")}
           freeMode={true}
         >
           {secondSwiperImages.map((image, index) => (
