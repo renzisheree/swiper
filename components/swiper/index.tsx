@@ -30,7 +30,7 @@ interface LoadedImage {
 }
 
 const ImageGallery: React.FC = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [ismobile, setismobile] = useState(false);
   const [firstSwiperImages, setFirstSwiperImages] = useState<LoadedImage[]>([]);
   const [secondSwiperImages, setSecondSwiperImages] = useState<LoadedImage[]>(
     []
@@ -56,7 +56,7 @@ const ImageGallery: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setismobile(window.innerWidth <= 768);
     };
 
     handleResize();
@@ -144,10 +144,10 @@ const ImageGallery: React.FC = () => {
     return <LoadingMessage>Loading...</LoadingMessage>;
   }
   // mobile
-  if (isMobile) {
+  if (ismobile) {
     return (
       <MobileContainer>
-        <Title $isMobile={true}>Thư viện hình ảnh</Title>
+        <Title $ismobile={true}>Thư viện hình ảnh</Title>
         <Swiper
           direction="vertical"
           className="mobile-swiper"
@@ -171,8 +171,8 @@ const ImageGallery: React.FC = () => {
   }
   // desktop
   return (
-    <Container $isMobile={false}>
-      <Title $isMobile={false}>Thư viện hình ảnh</Title>
+    <Container $ismobile={false}>
+      <Title $ismobile={false}>Thư viện hình ảnh</Title>
       <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
         <Swiper
           modules={[Controller]}

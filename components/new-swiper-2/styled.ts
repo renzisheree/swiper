@@ -4,11 +4,11 @@ export interface PaginationDotProps {
 }
 
 export interface ContainerProps {
-  $isMobile: boolean;
+  $ismobile: boolean;
 }
 
 export interface TitleProps {
-  $isMobile: boolean;
+  $ismobile: boolean;
 }
 
 export interface DesktopImageWrapperProps {
@@ -27,7 +27,7 @@ export interface DesktopSwiperWrapperProps {
 
 export const Container = styled.div<ContainerProps>`
   ${(props) =>
-    props.$isMobile
+    props.$ismobile
       ? `
     height: 100vh;
     width: 100%;
@@ -41,11 +41,11 @@ export const Container = styled.div<ContainerProps>`
 
 export const Title = styled.h1<TitleProps>`
   color: #e87722;
-  font-size: ${(props) => (props.$isMobile ? "20px" : "39px")};
+  font-size: ${(props) => (props.$ismobile ? "20px" : "39px")};
   font-weight: 700;
-  line-height: ${(props) => (props.$isMobile ? "25px" : "48.75px")};
+  line-height: ${(props) => (props.$ismobile ? "25px" : "48.75px")};
   text-align: center;
-  margin-bottom: ${(props) => (props.$isMobile ? "16px" : "32px")};
+  margin-bottom: ${(props) => (props.$ismobile ? "16px" : "32px")};
 `;
 
 export const LoadingMessage = styled.div`
