@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Controller, FreeMode } from "swiper/modules";
+import { Controller } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -150,29 +150,20 @@ const ImageGallery: React.FC = () => {
         <Swiper
           direction="vertical"
           className="mobile-swiper"
-          slidesPerView="auto"
+          slidesPerView={"auto"}
           spaceBetween={16}
-          freeMode={true}
-          modules={[FreeMode]}
         >
-          <SwiperSlide>
-            <div>
-              {firstSwiperImages
-                .concat(secondSwiperImages)
-                .map((image, index) => (
-                  <MobileImageWrapper
-                    key={`mobile-image-${index}`}
-                    $aspectRatio={image.dimensions.aspectRatio}
-                  >
-                    <StyledImage
-                      src={image.src}
-                      alt={`Image ${index}`}
-                      loading="lazy"
-                    />
-                  </MobileImageWrapper>
-                ))}
-            </div>
-          </SwiperSlide>
+          {firstSwiperImages.concat(secondSwiperImages).map((image, index) => (
+            <SwiperSlide key={`mobile-image-${index}`}>
+              <MobileImageWrapper $aspectRatio={image.dimensions.aspectRatio}>
+                <StyledImage
+                  src={image.src}
+                  alt={`Image ${index}`}
+                  loading="lazy"
+                />
+              </MobileImageWrapper>
+            </SwiperSlide>
+          ))}
         </Swiper>
       </MobileContainer>
     );

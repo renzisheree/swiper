@@ -8,7 +8,7 @@ const ScrollbarContainer = styled.div`
   height: 8px;
   background-color: #f5f5f5;
   border-radius: 4px;
-  margin-top: 24p x;
+  margin-top: 24px;
   overflow: hidden;
 `;
 
@@ -23,11 +23,11 @@ const ScrollbarThumb = styled.div<{ position: number; size: number }>`
   cursor: pointer;
 
   &:hover {
-    background-color: #d66a1b;
+    background-color: #e87722;
   }
 
   &:active {
-    background-color: #c25d15;
+    background-color: #e87722;
   }
 `;
 
