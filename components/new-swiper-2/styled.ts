@@ -65,7 +65,7 @@ export const DesktopSwiperWrapper = styled.div<DesktopSwiperWrapperProps>`
     position: absolute;
     top: 0;
     height: 100%;
-    width: 96px;
+    width: 152px;
     pointer-events: none;
     z-index: 10;
     transition: opacity 0.3s ease;
