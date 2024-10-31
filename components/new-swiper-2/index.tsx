@@ -157,11 +157,10 @@ const ImageGallery: React.FC = () => {
       },
       freeMode: {
         enabled: true,
-        sticky: true,
+        sticky: false,
         momentumBounce: true,
         momentumRatio: 0.5,
         momentumVelocityRatio: 0.5,
-        minimumVelocity: 0.8,
       },
       speed: 600,
       resistance: true,
