@@ -1,3 +1,4 @@
+import Image from "next/image";
 import styled from "styled-components";
 export interface PaginationDotProps {
   $isActive: boolean;
@@ -170,4 +171,66 @@ export const StyledImage = styled.img`
   object-fit: cover;
   border-radius: 24px;
   object-position: center;
+`;
+export const SwiperContainer = styled.div`
+  position: relative;
+`;
+export const LeftArrow = styled(Image)`
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  height: 12px;
+  width: 12px;
+  color: red;
+  z-index: 99;
+  transform: translateY(-50%);
+`;
+
+export const RightArrow = styled(Image)`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  height: 12px;
+  width: 12px;
+  transform: translateY(-50%);
+`;
+
+export const CircleButton = styled.div<{ $isDragging: boolean }>`
+  position: absolute;
+  right: 10vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: grab;
+  z-index: 20;
+  transition: transform 0.3s ease;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+
+  ${(props) =>
+    props.$isDragging &&
+    `
+    cursor: grabbing;
+    transform: translateY(-50%) scale(1.1);
+  `}
+
+  &:hover {
+    transform: translateY(-50%) scale(1.1);
+  }
+`;
+export const Text = styled.div`
+  color: black;
+  font-size: 16px;
+  font-weight: 450;
+  line-height: 20px;
 `;

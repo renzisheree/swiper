@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Controller, FreeMode, Mousewheel } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
+import leftArrow from "./images/arrow-left.svg";
+import rightArrow from "./images/arrow-right.svg";
 
 import {
   Container,
@@ -13,6 +21,11 @@ import {
   MobileContainer,
   MobileImageWrapper,
   StyledImage,
+  CircleButton,
+  SwiperContainer,
+  LeftArrow,
+  RightArrow,
+  Text,
 } from "./styled";
 import { SwiperOptions } from "swiper/types";
 
@@ -43,7 +56,7 @@ const ASPECT_RATIOS = [
 ] as const;
 
 const ImageGallery: React.FC = () => {
-  const [ismobile, setismobile] = useState(
+  const [isMobile, setIsMobile] = useState(
     () => window.innerWidth <= MOBILE_BREAKPOINT
   );
   const [images, setImages] = useState<LoadedImage[]>([]);
@@ -53,9 +66,11 @@ const ImageGallery: React.FC = () => {
   const [swiperPosition, setSwiperPosition] = useState<
     "start" | "end" | "between"
   >("start");
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
 
   const handleResize = useCallback(() => {
-    setismobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
   }, []);
 
   useEffect(() => {
@@ -89,6 +104,7 @@ const ImageGallery: React.FC = () => {
 
       img.addEventListener("load", handleLoad);
       img.addEventListener("error", handleError);
+
       return () => {
         img.removeEventListener("load", handleLoad);
         img.removeEventListener("error", handleError);
@@ -116,6 +132,7 @@ const ImageGallery: React.FC = () => {
 
       setImages(loadedImages.sort(() => Math.random() - 0.5));
     } catch (err) {
+      console.error("Failed to load images:", err);
     } finally {
       setLoading(false);
     }
@@ -124,6 +141,71 @@ const ImageGallery: React.FC = () => {
   useEffect(() => {
     loadImages();
   }, [loadImages]);
+  // Add these refs to store the animation frame ID
+  const dragAnimationRef = useRef<number>();
+  const lastDragX = useRef(0);
+
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      setIsDragging(true);
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      setDragStartX(clientX);
+      lastDragX.current = clientX;
+
+      // Prevent default behavior
+      e.preventDefault();
+    },
+    []
+  );
+
+  const handleDragMove = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      if (!isDragging || !firstSwiper || !secondSwiper) return;
+
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const deltaX = clientX - lastDragX.current;
+      lastDragX.current = clientX;
+
+      // Cancel any existing animation frame
+      if (dragAnimationRef.current) {
+        cancelAnimationFrame(dragAnimationRef.current);
+      }
+
+      // Schedule the swiper update
+      dragAnimationRef.current = requestAnimationFrame(() => {
+        const normalizedDelta = deltaX * 1.5; // Adjust sensitivity
+        firstSwiper.translateTo(firstSwiper.translate - normalizedDelta, 0);
+        secondSwiper.translateTo(secondSwiper.translate - normalizedDelta, 0);
+      });
+
+      e.preventDefault();
+    },
+    [isDragging, firstSwiper, secondSwiper]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    if (dragAnimationRef.current) {
+      cancelAnimationFrame(dragAnimationRef.current);
+    }
+  }, []);
+
+  // Add event listeners for drag
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleDragMove);
+      window.addEventListener("touchmove", handleDragMove);
+      window.addEventListener("mouseup", handleDragEnd);
+      window.addEventListener("touchend", handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleDragMove);
+      window.removeEventListener("touchmove", handleDragMove);
+      window.removeEventListener("mouseup", handleDragEnd);
+      window.removeEventListener("touchend", handleDragEnd);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
 
   const handleSlideChange = useCallback((swiper: SwiperType) => {
     setSwiperPosition(
@@ -167,7 +249,6 @@ const ImageGallery: React.FC = () => {
     [handleSlideChange]
   );
 
-  // Cấu hình riêng cho firstSwiper với autoplay
   const firstSwiperConfig: SwiperOptions = useMemo(
     () => ({
       ...swiperConfig,
@@ -180,12 +261,14 @@ const ImageGallery: React.FC = () => {
     [swiperConfig]
   );
 
-  if (loading) return <LoadingMessage>Loading...</LoadingMessage>;
+  if (loading) {
+    return <LoadingMessage>Loading...</LoadingMessage>;
+  }
 
-  if (ismobile) {
+  if (isMobile) {
     return (
       <MobileContainer>
-        <Title $ismobile>Thư viện hình ảnh</Title>
+        <Title $ismobile>Image Gallery</Title>
         <Swiper
           {...swiperConfig}
           direction="vertical"
@@ -209,35 +292,46 @@ const ImageGallery: React.FC = () => {
 
   return (
     <Container $ismobile={false}>
-      <Title $ismobile={false}>Thư viện hình ảnh</Title>
-      {[firstSwiperImages, secondSwiperImages].map((swiperImages, index) => (
-        <DesktopSwiperWrapper key={index} $scrollPosition={swiperPosition}>
-          <Swiper
-            {...(index === 0 ? firstSwiperConfig : swiperConfig)}
-            onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
-            controller={{
-              control: index === 0 ? secondSwiper : firstSwiper,
-              by: "container",
-            }}
-          >
-            {swiperImages.map((image, imageIndex) => (
-              <SwiperSlide key={`swiper-${index}-${imageIndex}`}>
-                <DesktopImageWrapper
-                  $width={
-                    (image.dimensions.width / image.dimensions.height) * 366
-                  }
-                >
-                  <StyledImage
-                    src={image.src}
-                    alt={`Image ${imageIndex + 1}`}
-                    loading="lazy"
-                  />
-                </DesktopImageWrapper>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </DesktopSwiperWrapper>
-      ))}
+      <Title $ismobile={false}>Image Gallery</Title>
+      <SwiperContainer>
+        {[firstSwiperImages, secondSwiperImages].map((swiperImages, index) => (
+          <DesktopSwiperWrapper key={index} $scrollPosition={swiperPosition}>
+            <Swiper
+              {...(index === 0 ? firstSwiperConfig : swiperConfig)}
+              onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
+              controller={{
+                control: index === 0 ? secondSwiper : firstSwiper,
+                by: "container",
+              }}
+            >
+              {swiperImages.map((image, imageIndex) => (
+                <SwiperSlide key={`swiper-${index}-${imageIndex}`}>
+                  <DesktopImageWrapper
+                    $width={
+                      (image.dimensions.width / image.dimensions.height) * 366
+                    }
+                  >
+                    <StyledImage
+                      src={image.src}
+                      alt={`Image ${imageIndex + 1}`}
+                      loading="lazy"
+                    />
+                  </DesktopImageWrapper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </DesktopSwiperWrapper>
+        ))}
+        <CircleButton
+          $isDragging={isDragging}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        >
+          <LeftArrow src={leftArrow} alt="Left Arrow" />
+          <Text>Kéo</Text>
+          <RightArrow src={rightArrow} alt="Right Arrow" />
+        </CircleButton>
+      </SwiperContainer>
     </Container>
   );
 };
