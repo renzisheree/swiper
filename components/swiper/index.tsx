@@ -146,6 +146,7 @@ const ImageGallery: React.FC = () => {
       slidesPerView: "auto" as const,
       autoplay: {
         delay: 5000,
+        disableOnInteraction: true,
       },
       mousewheel: {
         // scroll
@@ -154,11 +155,11 @@ const ImageGallery: React.FC = () => {
         thresholdDelta: 50,
         thresholdTime: 100,
       },
-
       speed: 600,
       resistance: true,
       resistanceRatio: 0.5,
       watchSlidesProgress: true,
+      disableOnInteraction: true,
       preventInteractionOnTransition: true,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),

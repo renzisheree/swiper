@@ -166,6 +166,7 @@ const ImageGallery: React.FC = () => {
       speed: 600,
       resistance: true,
       resistanceRatio: 0.5,
+      disableOnInteraction: true,
       preventInteractionOnTransition: true,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
