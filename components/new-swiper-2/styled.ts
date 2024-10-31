@@ -162,6 +162,11 @@ export const StyledImage = styled.img`
   left: 0;
   width: 100%;
   height: 100%;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
   object-fit: cover;
   border-radius: 24px;
   object-position: center;

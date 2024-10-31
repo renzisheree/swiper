@@ -28,7 +28,7 @@ interface LoadedImage {
 }
 
 const MOBILE_BREAKPOINT = 768;
-const IMAGE_COUNT = 30;
+const IMAGE_COUNT = 31;
 const DEFAULT_DIMENSIONS = {
   width: 400,
   height: 300,
@@ -166,7 +166,6 @@ const ImageGallery: React.FC = () => {
       speed: 600,
       resistance: true,
       resistanceRatio: 0.5,
-      watchSlidesProgress: true,
       preventInteractionOnTransition: true,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
