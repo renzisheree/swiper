@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Controller, FreeMode, Mousewheel } from "swiper/modules";
+import { Autoplay, Controller, FreeMode, Mousewheel } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 
@@ -138,12 +138,36 @@ const ImageGallery: React.FC = () => {
       secondSwiperImages: images.slice(midPoint),
     };
   }, [images]);
+
   const swiperConfig: SwiperOptions = useMemo(
     () => ({
-      modules: [Controller, Mousewheel, FreeMode],
+      modules: [Controller, Mousewheel, FreeMode, Autoplay],
       spaceBetween: 24,
       slidesPerView: "auto" as const,
-      mousewheel: true,
+      autoplay: {
+        delay: 5000,
+      },
+      mousewheel: {
+        // scroll
+        releaseOnEdges: true,
+        sensitivity: 4,
+        thresholdDelta: 50,
+        thresholdTime: 100,
+      },
+      freeMode: {
+        // kéo không đồng bộ giữa 2 swiper
+        enabled: true,
+        sticky: false,
+        momentumBounce: true,
+        momentumRatio: 0.8,
+        momentumVelocityRatio: 0.8,
+        minimumVelocity: 0.5,
+      },
+      speed: 600,
+      resistance: true,
+      resistanceRatio: 0.5,
+      watchSlidesProgress: true,
+      preventInteractionOnTransition: false,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
       onReachEnd: () => setSwiperPosition("end"),
@@ -188,6 +212,7 @@ const ImageGallery: React.FC = () => {
             onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
             controller={{
               control: index === 0 ? secondSwiper : firstSwiper,
+              by: "container",
             }}
           >
             {swiperImages.map((image, imageIndex) => (

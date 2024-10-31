@@ -1,13 +1,13 @@
 import dynamic from "next/dynamic";
 
-const ImageGallery = dynamic(() => import("../components/swiper/index"), {
+const TwoRowSwiper = dynamic(() => import("../components/new-swiper-2"), {
   ssr: false,
 });
 
 export default function Home() {
   return (
-    <div>
-      <ImageGallery />
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <TwoRowSwiper />
     </div>
   );
 }
