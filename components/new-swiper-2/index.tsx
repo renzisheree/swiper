@@ -143,31 +143,29 @@ const ImageGallery: React.FC = () => {
     () => ({
       modules: [Controller, Mousewheel, FreeMode, Autoplay],
       spaceBetween: 24,
-      slidesPerView: "auto" as const,
+      slidesPerView: "auto",
       autoplay: {
         delay: 5000,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
       },
       mousewheel: {
-        // scroll
         releaseOnEdges: true,
-        sensitivity: 1.5, // độ nhạy khi lăn chuột
+        sensitivity: 1.5,
         thresholdDelta: 50,
         thresholdTime: 100,
       },
       freeMode: {
-        // kéo không đồng bộ giữa 2 swiper
         enabled: true,
-        sticky: false,
+        sticky: true,
         momentumBounce: true,
-        momentumRatio: 0.8,
-        momentumVelocityRatio: 0.8,
-        minimumVelocity: 0.5,
+        momentumRatio: 0.5,
+        momentumVelocityRatio: 0.5,
+        minimumVelocity: 0.8,
       },
       speed: 600,
       resistance: true,
       resistanceRatio: 0.5,
-      disableOnInteraction: true,
-      preventInteractionOnTransition: true,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
       onReachEnd: () => setSwiperPosition("end"),
