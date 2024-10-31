@@ -144,11 +144,6 @@ const ImageGallery: React.FC = () => {
       modules: [Controller, Mousewheel, FreeMode, Autoplay],
       spaceBetween: 24,
       slidesPerView: "auto",
-      autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-        pauseOnMouseEnter: true,
-      },
       mousewheel: {
         releaseOnEdges: true,
         sensitivity: 1.5,
@@ -170,6 +165,19 @@ const ImageGallery: React.FC = () => {
       onReachEnd: () => setSwiperPosition("end"),
     }),
     [handleSlideChange]
+  );
+
+  // Cấu hình riêng cho firstSwiper với autoplay
+  const firstSwiperConfig: SwiperOptions = useMemo(
+    () => ({
+      ...swiperConfig,
+      autoplay: {
+        delay: 3000,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+      },
+    }),
+    [swiperConfig]
   );
 
   if (loading) return <LoadingMessage>Loading...</LoadingMessage>;
@@ -205,7 +213,7 @@ const ImageGallery: React.FC = () => {
       {[firstSwiperImages, secondSwiperImages].map((swiperImages, index) => (
         <DesktopSwiperWrapper key={index} $scrollPosition={swiperPosition}>
           <Swiper
-            {...swiperConfig}
+            {...(index === 0 ? firstSwiperConfig : swiperConfig)}
             onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
             controller={{
               control: index === 0 ? secondSwiper : firstSwiper,
