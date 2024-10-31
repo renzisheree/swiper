@@ -1,3 +1,4 @@
+import Image from "next/image";
 import styled from "styled-components";
 export interface PaginationDotProps {
   $isActive: boolean;
@@ -38,36 +39,17 @@ export const Container = styled.div<ContainerProps>`
     padding: 16px;
   `}
 `;
-
-export const Title = styled.h1<TitleProps>`
-  color: #e87722;
-  font-size: ${(props) => (props.$ismobile ? "20px" : "39px")};
-  font-weight: 700;
-  line-height: ${(props) => (props.$ismobile ? "25px" : "48.75px")};
-  text-align: center;
-  margin-bottom: ${(props) => (props.$ismobile ? "16px" : "32px")};
-`;
-
-export const LoadingMessage = styled.div`
-  text-align: center;
-  font-size: 24px;
-  color: #e87722;
-  margin-top: 20px;
-`;
-
-export const DesktopSwiperWrapper = styled.div<DesktopSwiperWrapperProps>`
+export const SwiperContainer = styled.div<DesktopSwiperWrapperProps>`
   position: relative;
-  margin-bottom: 20px;
-
   &::before,
   &::after {
     content: "";
     position: absolute;
     top: 0;
     height: 100%;
-    width: 96px;
-    pointer-events: none;
+    width: 152px;
     z-index: 10;
+    pointer-events: none;
     transition: opacity 0.3s ease;
   }
 
@@ -110,6 +92,26 @@ export const DesktopSwiperWrapper = styled.div<DesktopSwiperWrapperProps>`
       }
     }};
   }
+`;
+export const Title = styled.h1<TitleProps>`
+  color: #e87722;
+  font-size: ${(props) => (props.$ismobile ? "20px" : "39px")};
+  font-weight: 700;
+  line-height: ${(props) => (props.$ismobile ? "25px" : "48.75px")};
+  text-align: center;
+  margin-bottom: ${(props) => (props.$ismobile ? "16px" : "32px")};
+`;
+
+export const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 24px;
+  color: #e87722;
+  margin-top: 20px;
+`;
+
+export const DesktopSwiperWrapper = styled.div`
+  position: relative;
+  margin-bottom: 20px;
 
   .swiper {
     width: 100%;
@@ -162,33 +164,78 @@ export const StyledImage = styled.img`
   left: 0;
   width: 100%;
   height: 100%;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
   object-fit: cover;
   border-radius: 24px;
   object-position: center;
 `;
-export const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
+
+export const LeftArrow = styled(Image)`
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  height: 12px;
+  width: 12px;
+  color: red;
+  z-index: 99;
+  transform: translateY(-50%);
 `;
 
-export const PaginationWrapper = styled.div`
+export const RightArrow = styled(Image)`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  height: 12px;
+  width: 12px;
+  transform: translateY(-50%);
+`;
+export const DragArea = styled.div<{ $size: number }>`
+  position: absolute;
+  width: ${(props) => props.$size}px;
+  height: ${(props) => props.$size}px;
+  right: 133px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 8px;
   display: flex;
-  gap: 8px;
+  z-index: 99;
   align-items: center;
+  justify-content: center;
 `;
 
-export const PaginationDot = styled.button<PaginationDotProps>`
-  width: 8px;
-  height: 8px;
+export const CircleButton = styled.div<{
+  $isDragging: boolean;
+  $x: number;
+  $y: number;
+}>`
+  position: absolute;
+  left: ${(props) => props.$x}px;
+  top: ${(props) => props.$y}px;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background: white;
+  z-index: 99;
   border-radius: 50%;
-  background-color: ${(props) => (props.$isActive ? "#e87722" : "#D9D9D9")};
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  transition: ${(props) => (props.$isDragging ? "none" : "all 0.3s ease")};
 
-  &:hover {
-    background-color: ${(props) => (props.$isActive ? "#e87722" : "#BFBFBF")};
+  &:active {
+    cursor: grabbing;
   }
+`;
+
+export const Text = styled.div`
+  color: black;
+  font-size: 16px;
+  font-weight: 450;
+  line-height: 20px;
 `;

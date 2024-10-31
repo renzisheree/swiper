@@ -26,6 +26,7 @@ import {
   LeftArrow,
   RightArrow,
   Text,
+  DragArea,
 } from "./styled";
 import { SwiperOptions } from "swiper/types";
 
@@ -67,8 +68,16 @@ const ImageGallery: React.FC = () => {
     "start" | "end" | "between"
   >("start");
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-
+  const DRAG_AREA_SIZE = 400; // Kích thước drag area
+  const DRAG_AREA_PADDING = 20; // Padding từ mép drag area
+  const [buttonPosition, setButtonPosition] = useState(() => ({
+    x: DRAG_AREA_SIZE / 2,
+    y: DRAG_AREA_SIZE / 2,
+  }));
+  const dragStartPosition = useRef({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
+  const lastDragX = useRef(0);
+  const dragAnimationRef = useRef<number>();
   const handleResize = useCallback(() => {
     setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
   }, []);
@@ -141,56 +150,78 @@ const ImageGallery: React.FC = () => {
   useEffect(() => {
     loadImages();
   }, [loadImages]);
-  // Add these refs to store the animation frame ID
-  const dragAnimationRef = useRef<number>();
-  const lastDragX = useRef(0);
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       setIsDragging(true);
+      isDraggingRef.current = true;
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      setDragStartX(clientX);
-      lastDragX.current = clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-      // Prevent default behavior
+      dragStartPosition.current = {
+        x: clientX - buttonPosition.x,
+        y: DRAG_AREA_SIZE / 2, // lock vị trí y
+      };
+
+      lastDragX.current = clientX;
       e.preventDefault();
     },
-    []
+    [buttonPosition]
   );
 
   const handleDragMove = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      if (!isDragging || !firstSwiper || !secondSwiper) return;
+      if (!isDraggingRef.current) return;
 
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const deltaX = clientX - lastDragX.current;
-      lastDragX.current = clientX;
+      const clientX =
+        "touches" in e
+          ? (e as TouchEvent).touches[0].clientX
+          : (e as MouseEvent).clientX;
 
-      // Cancel any existing animation frame
-      if (dragAnimationRef.current) {
-        cancelAnimationFrame(dragAnimationRef.current);
-      }
+      // Tính toán vị trí mới, chỉ theo trục X
+      let newX = clientX - dragStartPosition.current.x;
 
-      // Schedule the swiper update
-      dragAnimationRef.current = requestAnimationFrame(() => {
-        const normalizedDelta = deltaX * 1.5; // Adjust sensitivity
-        firstSwiper.translateTo(firstSwiper.translate - normalizedDelta, 0);
-        secondSwiper.translateTo(secondSwiper.translate - normalizedDelta, 0);
+      // Giới hạn trong phạm vi cho phép + thêm padding
+      newX = Math.max(
+        DRAG_AREA_PADDING,
+        Math.min(newX, DRAG_AREA_SIZE - DRAG_AREA_PADDING)
+      );
+
+      setButtonPosition({
+        x: newX,
+        y: DRAG_AREA_SIZE / 2,
       });
+
+      if (firstSwiper) {
+        const totalSlides = firstSwiper.slides.length - 1;
+        const moveRatio = Math.min(
+          1,
+          (newX - DRAG_AREA_PADDING) / (DRAG_AREA_SIZE - 2 * DRAG_AREA_PADDING)
+        );
+        const targetIndex = Math.floor(moveRatio * totalSlides);
+
+        // Di chuyển firstSwiper đến vị trí tương ứng
+        firstSwiper.slideTo(targetIndex, 300);
+      }
 
       e.preventDefault();
     },
-    [isDragging, firstSwiper, secondSwiper]
+    [firstSwiper]
   );
-
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
+    isDraggingRef.current = false;
+
     if (dragAnimationRef.current) {
       cancelAnimationFrame(dragAnimationRef.current);
     }
-  }, []);
 
-  // Add event listeners for drag
+    // Animate back to initial position
+    setButtonPosition({
+      x: DRAG_AREA_SIZE / 2,
+      y: DRAG_AREA_SIZE / 2,
+    });
+  }, []);
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleDragMove);
@@ -208,11 +239,13 @@ const ImageGallery: React.FC = () => {
   }, [isDragging, handleDragMove, handleDragEnd]);
 
   const handleSlideChange = useCallback((swiper: SwiperType) => {
-    setSwiperPosition(
-      swiper.isBeginning ? "start" : swiper.isEnd ? "end" : "between"
-    );
+    const position = swiper.isBeginning
+      ? "start"
+      : swiper.isEnd
+      ? "end"
+      : "between";
+    setSwiperPosition(position);
   }, []);
-
   const { firstSwiperImages, secondSwiperImages } = useMemo(() => {
     const midPoint = Math.ceil(images.length / 2);
     return {
@@ -220,7 +253,9 @@ const ImageGallery: React.FC = () => {
       secondSwiperImages: images.slice(midPoint),
     };
   }, [images]);
-
+  useEffect(() => {
+    console.log(swiperPosition);
+  }, [swiperPosition]);
   const swiperConfig: SwiperOptions = useMemo(
     () => ({
       modules: [Controller, Mousewheel, FreeMode, Autoplay],
@@ -240,8 +275,6 @@ const ImageGallery: React.FC = () => {
         momentumVelocityRatio: 0.5,
       },
       speed: 600,
-      resistance: true,
-      resistanceRatio: 0.5,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
       onReachEnd: () => setSwiperPosition("end"),
@@ -293,9 +326,9 @@ const ImageGallery: React.FC = () => {
   return (
     <Container $ismobile={false}>
       <Title $ismobile={false}>Image Gallery</Title>
-      <SwiperContainer>
+      <SwiperContainer $scrollPosition={swiperPosition}>
         {[firstSwiperImages, secondSwiperImages].map((swiperImages, index) => (
-          <DesktopSwiperWrapper key={index} $scrollPosition={swiperPosition}>
+          <DesktopSwiperWrapper $scrollPosition={swiperPosition} key={index}>
             <Swiper
               {...(index === 0 ? firstSwiperConfig : swiperConfig)}
               onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
@@ -322,15 +355,19 @@ const ImageGallery: React.FC = () => {
             </Swiper>
           </DesktopSwiperWrapper>
         ))}
-        <CircleButton
-          $isDragging={isDragging}
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
-        >
-          <LeftArrow src={leftArrow} alt="Left Arrow" />
-          <Text>Kéo</Text>
-          <RightArrow src={rightArrow} alt="Right Arrow" />
-        </CircleButton>
+        <DragArea $size={DRAG_AREA_SIZE}>
+          <CircleButton
+            $isDragging={isDragging}
+            $x={buttonPosition.x}
+            $y={buttonPosition.y}
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+          >
+            <LeftArrow src={leftArrow} alt="Left Arrow" />
+            <Text>Kéo</Text>
+            <RightArrow src={rightArrow} alt="Right Arrow" />
+          </CircleButton>
+        </DragArea>
       </SwiperContainer>
     </Container>
   );

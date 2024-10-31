@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 
-const ImageGallery = dynamic(() => import("../../components/swiper"), {
+const ImageGallery = dynamic(() => import("../../components/new-swiper"), {
   ssr: false,
 });
 

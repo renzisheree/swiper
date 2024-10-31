@@ -25,7 +25,65 @@ export type ScrollPosition = "start" | "end" | "between";
 export interface DesktopSwiperWrapperProps {
   $scrollPosition: ScrollPosition;
 }
+export const SwiperContainer = styled.div<DesktopSwiperWrapperProps>`
+  position: relative;
+  margin-bottom: 20px;
+  overflow: hidden;
 
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 152px;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(
+      to left,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 1)
+    );
+    opacity: ${(props) => {
+      switch (props.$scrollPosition) {
+        case "start":
+          return 1;
+        case "between":
+          return 1;
+        case "end":
+          return 0;
+        default:
+          return 0;
+      }
+    }};
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 1)
+    );
+    opacity: ${(props) => {
+      switch (props.$scrollPosition) {
+        case "start":
+          return 0;
+        case "between":
+          return 1;
+        case "end":
+          return 1;
+        default:
+          return 0;
+      }
+    }};
+  }
+`;
 export const Container = styled.div<ContainerProps>`
   ${(props) =>
     props.$ismobile
@@ -59,58 +117,6 @@ export const LoadingMessage = styled.div`
 export const DesktopSwiperWrapper = styled.div<DesktopSwiperWrapperProps>`
   position: relative;
   margin-bottom: 20px;
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    height: 100%;
-    width: 152px;
-    pointer-events: none;
-    z-index: 10;
-    transition: opacity 0.3s ease;
-  }
-
-  &::before {
-    left: 0;
-    background: linear-gradient(
-      to left,
-      rgba(255, 255, 255, 0),
-      rgba(255, 255, 255, 1)
-    );
-    opacity: ${(props) => {
-      switch (props.$scrollPosition) {
-        case "end":
-          return 1;
-        case "between":
-          return 1;
-        case "start":
-        default:
-          return 0;
-      }
-    }};
-  }
-
-  &::after {
-    right: 0;
-    background: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0),
-      rgba(255, 255, 255, 1)
-    );
-    opacity: ${(props) => {
-      switch (props.$scrollPosition) {
-        case "start":
-          return 1;
-        case "between":
-          return 1;
-        case "end":
-        default:
-          return 0;
-      }
-    }};
-  }
 
   .swiper {
     width: 100%;
@@ -172,9 +178,7 @@ export const StyledImage = styled.img`
   border-radius: 24px;
   object-position: center;
 `;
-export const SwiperContainer = styled.div`
-  position: relative;
-`;
+
 export const LeftArrow = styled(Image)`
   position: absolute;
   left: 8px;
@@ -194,40 +198,46 @@ export const RightArrow = styled(Image)`
   width: 12px;
   transform: translateY(-50%);
 `;
-
-export const CircleButton = styled.div<{ $isDragging: boolean }>`
+export const DragArea = styled.div<{ $size: number }>`
   position: absolute;
-  right: 10vw;
+  width: ${(props) => props.$size}px;
+  height: ${(props) => props.$size}px;
+  right: 133px;
   top: 50%;
   transform: translateY(-50%);
+  border-radius: 8px;
+  display: flex;
+  z-index: 99;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const CircleButton = styled.div<{
+  $isDragging: boolean;
+  $x: number;
+  $y: number;
+}>`
+  position: absolute;
+  left: ${(props) => props.$x}px;
+  top: ${(props) => props.$y}px;
+  transform: translate(-50%, -50%);
   width: 120px;
   height: 120px;
-  background-color: white;
+  background: white;
+  z-index: 999;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
   cursor: grab;
-  z-index: 20;
-  transition: transform 0.3s ease;
-  overflow: hidden;
   user-select: none;
-  touch-action: none;
+  transition: ${(props) => (props.$isDragging ? "none" : "all 0.3s ease")};
 
-  ${(props) =>
-    props.$isDragging &&
-    `
+  &:active {
     cursor: grabbing;
-    transform: translateY(-50%) scale(1.1);
-  `}
-
-  &:hover {
-    transform: translateY(-50%) scale(1.1);
   }
 `;
+
 export const Text = styled.div`
   color: black;
   font-size: 16px;
