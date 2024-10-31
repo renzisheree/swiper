@@ -150,7 +150,7 @@ const ImageGallery: React.FC = () => {
       mousewheel: {
         // scroll
         releaseOnEdges: true,
-        sensitivity: 2, // độ nhạy khi kéo chuột
+        sensitivity: 1.5, // độ nhạy khi lăn chuột
         thresholdDelta: 50,
         thresholdTime: 100,
       },
