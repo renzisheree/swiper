@@ -150,7 +150,7 @@ const ImageGallery: React.FC = () => {
       mousewheel: {
         // scroll
         releaseOnEdges: true,
-        sensitivity: 4,
+        sensitivity: 2, // độ nhạy khi kéo chuột
         thresholdDelta: 50,
         thresholdTime: 100,
       },
@@ -167,7 +167,7 @@ const ImageGallery: React.FC = () => {
       resistance: true,
       resistanceRatio: 0.5,
       watchSlidesProgress: true,
-      preventInteractionOnTransition: false,
+      preventInteractionOnTransition: true,
       onSlideChange: handleSlideChange,
       onReachBeginning: () => setSwiperPosition("start"),
       onReachEnd: () => setSwiperPosition("end"),

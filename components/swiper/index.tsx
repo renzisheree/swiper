@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Controller } from "swiper/modules";
+import { Autoplay, Controller, FreeMode, Mousewheel } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
-import "swiper/css/free-mode";
 
 import {
   Container,
@@ -15,8 +14,7 @@ import {
   MobileImageWrapper,
   StyledImage,
 } from "./styled";
-import Scrollbar from "../scrollbar";
-import useScrollbar from "../../hooks/useScrollbar";
+import { SwiperOptions } from "swiper/types";
 
 interface ImageDimensions {
   width: number;
@@ -29,12 +27,26 @@ interface LoadedImage {
   dimensions: ImageDimensions;
 }
 
+const MOBILE_BREAKPOINT = 768;
+const IMAGE_COUNT = 30;
+const DEFAULT_DIMENSIONS = {
+  width: 400,
+  height: 300,
+  aspectRatio: 4 / 3,
+} as const;
+
+const ASPECT_RATIOS = [
+  { width: 1200, height: 800 }, // 3:2
+  { width: 1200, height: 1200 }, // 1:1
+  { width: 800, height: 1200 }, // 2:3
+  { width: 1200, height: 675 }, // 16:9
+] as const;
+
 const ImageGallery: React.FC = () => {
-  const [ismobile, setismobile] = useState(false);
-  const [firstSwiperImages, setFirstSwiperImages] = useState<LoadedImage[]>([]);
-  const [secondSwiperImages, setSecondSwiperImages] = useState<LoadedImage[]>(
-    []
+  const [ismobile, setismobile] = useState(
+    () => window.innerWidth <= MOBILE_BREAKPOINT
   );
+  const [images, setImages] = useState<LoadedImage[]>([]);
   const [firstSwiper, setFirstSwiper] = useState<SwiperType | null>(null);
   const [secondSwiper, setSecondSwiper] = useState<SwiperType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,124 +54,136 @@ const ImageGallery: React.FC = () => {
     "start" | "end" | "between"
   >("start");
 
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [thumbSize, setThumbSize] = useState(20);
-
-  const scrollbarRef = useRef<HTMLDivElement>(null);
-  const { handleMouseDown } = useScrollbar(
-    firstSwiper,
-    secondSwiper,
-    setScrollPosition,
-    scrollPosition,
-    thumbSize
-  );
-
-  useEffect(() => {
-    const handleResize = () => {
-      setismobile(window.innerWidth <= 768);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  const handleResize = useCallback(() => {
+    setismobile(window.innerWidth <= MOBILE_BREAKPOINT);
   }, []);
 
-  const updateScrollbar = (swiper: SwiperType) => {
-    const progress = swiper.progress;
-    const maxSlides = swiper.slides.length;
-    const visibleSlides =
-      swiper.params.slidesPerView === "auto"
-        ? Math.ceil(swiper.slides.length / 2)
-        : (swiper.params.slidesPerView as number);
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [handleResize]);
 
-    const thumbSizePercent = Math.min((visibleSlides / maxSlides) * 100, 100);
-    const maxScrollPosition = 100 - thumbSizePercent;
-    const currentPosition = progress * maxScrollPosition;
+  const getRandomResolution = useCallback(() => {
+    return ASPECT_RATIOS[Math.floor(Math.random() * ASPECT_RATIOS.length)];
+  }, []);
 
-    setThumbSize(thumbSizePercent);
-    setScrollPosition(currentPosition);
-  };
-  // fetch image từ picsum
-  const loadImages = async () => {
-    const imageUrls = Array.from({ length: 30 }, (_, index) => {
-      const { width, height } = getRandomResolution();
-      return `https://picsum.photos/${width}/${height}?random=${index}`;
-    });
-    //lấy width và height của image
-    const loadedImages = await Promise.all(
-      imageUrls.map((url) => {
-        return new Promise<LoadedImage>((resolve) => {
-          const img = new Image();
-          img.src = url;
+  const loadImage = useCallback((url: string): Promise<LoadedImage> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
 
-          img.onload = () => {
-            resolve({
-              src: url,
-              dimensions: {
-                width: img.naturalWidth,
-                height: img.naturalHeight,
-                aspectRatio: img.naturalWidth / img.naturalHeight,
-              },
-            });
-          };
-
-          img.onerror = () => {
-            resolve({
-              src: url,
-              dimensions: {
-                width: 400,
-                height: 300,
-                aspectRatio: 4 / 3,
-              },
-            });
-          };
+      const handleLoad = () => {
+        resolve({
+          src: url,
+          dimensions: {
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            aspectRatio: img.naturalWidth / img.naturalHeight,
+          },
         });
-      })
-    );
-    // chia image cho 2 swiper
-    const shuffledImages = loadedImages.sort(() => Math.random() - 0.5);
-    const midPoint = Math.ceil(shuffledImages.length / 2);
+      };
 
-    setFirstSwiperImages(shuffledImages.slice(0, midPoint));
-    setSecondSwiperImages(shuffledImages.slice(midPoint));
-    setLoading(false);
-  };
+      const handleError = () => {
+        reject(new Error(`Failed to load image: ${url}`));
+      };
+
+      img.addEventListener("load", handleLoad);
+      img.addEventListener("error", handleError);
+      return () => {
+        img.removeEventListener("load", handleLoad);
+        img.removeEventListener("error", handleError);
+      };
+    });
+  }, []);
+
+  const loadImages = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const imageUrls = Array.from({ length: IMAGE_COUNT }, (_, index) => {
+        const { width, height } = getRandomResolution();
+        return `https://picsum.photos/${width}/${height}?random=${index}`;
+      });
+
+      const loadedImages = await Promise.all(
+        imageUrls.map((url) =>
+          loadImage(url).catch(() => ({
+            src: url,
+            dimensions: DEFAULT_DIMENSIONS,
+          }))
+        )
+      );
+
+      setImages(loadedImages.sort(() => Math.random() - 0.5));
+    } catch (err) {
+    } finally {
+      setLoading(false);
+    }
+  }, [getRandomResolution, loadImage]);
 
   useEffect(() => {
     loadImages();
+  }, [loadImages]);
+
+  const handleSlideChange = useCallback((swiper: SwiperType) => {
+    setSwiperPosition(
+      swiper.isBeginning ? "start" : swiper.isEnd ? "end" : "between"
+    );
   }, []);
 
-  // blur effect
-  const handleSlideChange = (swiper: SwiperType) => {
-    updateScrollbar(swiper);
-    const isStart = swiper.isBeginning;
-    const isEnd = swiper.isEnd;
+  const { firstSwiperImages, secondSwiperImages } = useMemo(() => {
+    const midPoint = Math.ceil(images.length / 2);
+    return {
+      firstSwiperImages: images.slice(0, midPoint),
+      secondSwiperImages: images.slice(midPoint),
+    };
+  }, [images]);
 
-    if (isStart) setSwiperPosition("start");
-    else if (isEnd) setSwiperPosition("end");
-    else setSwiperPosition("between");
-  };
+  const swiperConfig: SwiperOptions = useMemo(
+    () => ({
+      modules: [Controller, Mousewheel, Autoplay],
+      spaceBetween: 24,
+      slidesPerView: "auto" as const,
+      autoplay: {
+        delay: 5000,
+      },
+      mousewheel: {
+        // scroll
+        releaseOnEdges: true,
+        sensitivity: 2,
+        thresholdDelta: 50,
+        thresholdTime: 100,
+      },
 
-  if (loading) {
-    return <LoadingMessage>Loading...</LoadingMessage>;
-  }
-  // mobile
+      speed: 600,
+      resistance: true,
+      resistanceRatio: 0.5,
+      watchSlidesProgress: true,
+      preventInteractionOnTransition: true,
+      onSlideChange: handleSlideChange,
+      onReachBeginning: () => setSwiperPosition("start"),
+      onReachEnd: () => setSwiperPosition("end"),
+    }),
+    [handleSlideChange]
+  );
+
+  if (loading) return <LoadingMessage>Loading...</LoadingMessage>;
+
   if (ismobile) {
     return (
       <MobileContainer>
-        <Title $ismobile={true}>Thư viện hình ảnh</Title>
+        <Title $ismobile>Thư viện hình ảnh</Title>
         <Swiper
+          {...swiperConfig}
           direction="vertical"
           className="mobile-swiper"
-          slidesPerView={"auto"}
-          spaceBetween={16}
         >
-          {firstSwiperImages.concat(secondSwiperImages).map((image, index) => (
+          {images.map((image, index) => (
             <SwiperSlide key={`mobile-image-${index}`}>
               <MobileImageWrapper $aspectRatio={image.dimensions.aspectRatio}>
                 <StyledImage
                   src={image.src}
-                  alt={`Image ${index}`}
+                  alt={`Image ${index + 1}`}
                   loading="lazy"
                 />
               </MobileImageWrapper>
@@ -169,82 +193,40 @@ const ImageGallery: React.FC = () => {
       </MobileContainer>
     );
   }
-  // desktop
+
   return (
     <Container $ismobile={false}>
       <Title $ismobile={false}>Thư viện hình ảnh</Title>
-      <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
-        <Swiper
-          modules={[Controller]}
-          onSwiper={setFirstSwiper}
-          controller={{ control: secondSwiper }}
-          slidesPerView="auto"
-          spaceBetween={24}
-          onSlideChange={handleSlideChange}
-        >
-          {firstSwiperImages.map((image, index) => (
-            <SwiperSlide key={`first-${index}`}>
-              <DesktopImageWrapper
-                $width={
-                  (image.dimensions.width / image.dimensions.height) * 366 // tính width từ height mặc định
-                }
-              >
-                <StyledImage
-                  src={image.src}
-                  alt={`Image ${index}`}
-                  loading="lazy"
-                />
-              </DesktopImageWrapper>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </DesktopSwiperWrapper>
-
-      <DesktopSwiperWrapper $scrollPosition={swiperPosition}>
-        <Swiper
-          modules={[Controller]}
-          onSwiper={setSecondSwiper}
-          controller={{ control: firstSwiper }}
-          slidesPerView="auto"
-          spaceBetween={24}
-          onSlideChange={handleSlideChange}
-        >
-          {secondSwiperImages.map((image, index) => (
-            <SwiperSlide key={`second-${index}`}>
-              <DesktopImageWrapper
-                $width={
-                  (image.dimensions.width / image.dimensions.height) * 366 //tính width từ height mặc định
-                }
-              >
-                <StyledImage
-                  src={image.src}
-                  alt={`Image ${index}`}
-                  loading="lazy"
-                />
-              </DesktopImageWrapper>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </DesktopSwiperWrapper>
-
-      <Scrollbar
-        ref={scrollbarRef}
-        position={scrollPosition}
-        size={thumbSize}
-        onMouseDown={handleMouseDown}
-      />
+      {[firstSwiperImages, secondSwiperImages].map((swiperImages, index) => (
+        <DesktopSwiperWrapper key={index} $scrollPosition={swiperPosition}>
+          <Swiper
+            {...swiperConfig}
+            onSwiper={index === 0 ? setFirstSwiper : setSecondSwiper}
+            controller={{
+              control: index === 0 ? secondSwiper : firstSwiper,
+              by: "container",
+            }}
+          >
+            {swiperImages.map((image, imageIndex) => (
+              <SwiperSlide key={`swiper-${index}-${imageIndex}`}>
+                <DesktopImageWrapper
+                  $width={
+                    (image.dimensions.width / image.dimensions.height) * 366
+                  }
+                >
+                  <StyledImage
+                    src={image.src}
+                    alt={`Image ${imageIndex + 1}`}
+                    loading="lazy"
+                  />
+                </DesktopImageWrapper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </DesktopSwiperWrapper>
+      ))}
     </Container>
   );
 };
 
 export default ImageGallery;
-// random resolution để test
-const getRandomResolution = () => {
-  const aspectRatios = [
-    { width: 1200, height: 800 }, // 3/2
-    { width: 1200, height: 1200 }, // 1/1
-    { width: 800, height: 1200 }, // 2/3
-    { width: 1200, height: 675 }, // 16/9
-  ];
-  return aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
-};
